@@ -1,5 +1,7 @@
 'use client';
 
+'use client';
+
 import { useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { MenuItem } from '@/lib/types';
@@ -25,7 +27,7 @@ export function QRCodeGenerator({ menuItems }: QRCodeGeneratorProps) {
     : Buffer.from(compressedData, 'utf-8').toString('base64');
   
   // QR data: Use the specified URL
-  const menuUrl = 'https://digital-menu-teme3.vercel.app/';
+  const menuUrl = 'https://digital-menu-one-rho.vercel.app/';
   
   const downloadQR = () => {
     if (!qrRef.current) return;
