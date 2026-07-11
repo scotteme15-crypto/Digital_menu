@@ -24,10 +24,8 @@ export function QRCodeGenerator({ menuItems }: QRCodeGeneratorProps) {
     ? btoa(compressedData)
     : Buffer.from(compressedData, 'utf-8').toString('base64');
   
-  // QR data: Simple link (fits in QR code!)
-  const menuUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/`
-    : `/`;
+  // QR data: Use the specified URL
+  const menuUrl = 'https://digital-menu-teme3.vercel.app/';
   
   const downloadQR = () => {
     if (!qrRef.current) return;
