@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import QRCodeStyling from 'qr-code-styling';
+import { useState, useRef } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { MenuItem } from '@/lib/types';
 import { compressMenuData, getCompressionStats } from '@/lib/qr-utils';
 import { Download, Copy, Check } from 'lucide-react';
@@ -11,77 +11,40 @@ interface QRCodeGeneratorProps {
 }
 
 export function QRCodeGenerator({ menuItems }: QRCodeGeneratorProps) {
-  const qrRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [showStats, setShowStats] = useState(false);
-  const qrInstanceRef = useRef<QRCodeStyling | null>(null);
-  
-  // For real QR codes, we'll use a smart hybrid approach:
-  // - QR encodes a link to the menu app with a version/hash identifier
-  // - The app receives this and loads the full menu from service worker cache
-  // - This ensures QR codes work at ANY size while remaining scannable
+  const qrRef = useRef<SVGSVGElement>(null);
   
   const originalData = JSON.stringify(menuItems);
   const compressedData = compressMenuData(menuItems);
   const stats = getCompressionStats(originalData, compressedData);
   
-  // Create a simple hash to identify this menu version (timestamp-based)
-  const menuVersionHash = Date.now().toString(36);
+  // Encode compressed menu data in Base64 (for stats display)
+  const encodedMenuData = typeof window !== 'undefined'
+    ? btoa(compressedData)
+    : Buffer.from(compressedData, 'utf-8').toString('base64');
   
-  // QR data: Simple link that triggers menu loading
-  // The menu data is cached in IndexedDB via service worker, 
-  // so the QR only needs to point to the app
+  // QR data: Simple link (fits in QR code!)
   const menuUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/?menu=${menuVersionHash}`
-    : `/?menu=${menuVersionHash}`;
+    ? `${window.location.origin}/`
+    : `/`;
   
-  const qrData = menuUrl;
-
-  useEffect(() => {
-    if (!qrRef.current) return;
-
-    // Create QR code instance with menu info text (works offline via service worker)
-    const qrCode = new QRCodeStyling({
-      width: 300,
-      height: 300,
-      data: qrData, // Simple offline-friendly QR
-      image: '/icon.svg',
-      dotsOptions: {
-        color: '#1a1a1a',
-        type: 'rounded',
-      },
-      backgroundOptions: {
-        color: '#ffffff',
-      },
-      cornersSquareOptions: {
-        color: '#d4a574',
-        type: 'extra-rounded',
-      },
-      cornersDotOptions: {
-        color: '#d4a574',
-        type: 'dot',
-      },
-      margin: 10,
-    });
-
-    qrInstanceRef.current = qrCode;
-    qrCode.append(qrRef.current);
-
-    return () => {
-      if (qrRef.current) {
-        qrRef.current.innerHTML = '';
-      }
-    };
-  }, [qrData]);
-
   const downloadQR = () => {
-    if (qrInstanceRef.current) {
-      qrInstanceRef.current.download({ name: 'menu-qr-code', extension: 'png' });
-    }
+    if (!qrRef.current) return;
+    const svgData = new XMLSerializer().serializeToString(qrRef.current);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'menu-qr-code.svg';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(qrData);
+    navigator.clipboard.writeText(menuUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -94,11 +57,15 @@ export function QRCodeGenerator({ menuItems }: QRCodeGeneratorProps) {
       </div>
 
       {/* QR Code Display */}
-      <div
-        ref={qrRef}
-        className="bg-white p-8 rounded-2xl shadow-menu-hover border-2 border-menu-border flex justify-center items-center"
-        style={{ width: '380px', height: '380px' }}
-      />
+      <div className="bg-white p-8 rounded-2xl shadow-menu-hover border-2 border-menu-border flex justify-center items-center">
+        <QRCodeSVG
+          ref={qrRef}
+          value={menuUrl}
+          size={300}
+          level="H"
+          includeMargin={true}
+        />
+      </div>
 
       {/* Info Stats */}
       <button
@@ -125,7 +92,7 @@ export function QRCodeGenerator({ menuItems }: QRCodeGeneratorProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-menu-text-secondary">Base64 Encoded:</span>
-              <span className="font-semibold text-menu-text">{(encodedMenuData.length).toLocaleString()} bytes</span>
+              <span className="font-semibold text-menu-text">{encodedMenuData.length.toLocaleString()} bytes</span>
             </div>
             <div className="flex justify-between">
               <span className="text-menu-text-secondary">Total Reduction:</span>
@@ -166,12 +133,10 @@ export function QRCodeGenerator({ menuItems }: QRCodeGeneratorProps) {
       <div className="w-full max-w-2xl bg-white rounded-lg p-6 border border-menu-border space-y-3">
         <h3 className="font-semibold text-menu-text text-lg">How It Works</h3>
         <ul className="text-menu-text-secondary text-sm space-y-2 list-disc list-inside">
-          <li><strong>Real QR Code:</strong> Encodes actual menu data (all {menuItems.length} items compressed and Base64-encoded)</li>
-          <li><strong>Smart Link:</strong> Points to your menu app with data embedded in URL parameter</li>
+          <li><strong>Real QR Code:</strong> Points to your menu app</li>
           <li><strong>Offline Ready:</strong> Service worker caches all menu data and images for offline access</li>
           <li><strong>Printable:</strong> Download and print QR on menus, table tents, or entrance signage</li>
-          <li><strong>No Server Required:</strong> Menu loads from local cache or URL parameter - completely self-contained</li>
-          <li><strong>Auto-detect:</strong> App automatically parses QR data and displays the full menu</li>
+          <li><strong>No Server Required:</strong> Menu loads from local cache - completely self-contained</li>
         </ul>
       </div>
     </div>
