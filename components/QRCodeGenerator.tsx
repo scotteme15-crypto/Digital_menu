@@ -55,7 +55,12 @@ export function QRCodeGenerator({ menuItems }: QRCodeGeneratorProps) {
       </div>
 
       {/* QR Code Display */}
-      <div className="bg-white p-8 rounded-2xl shadow-menu-hover border-2 border-menu-border flex justify-center items-center">
+      <a
+        href={menuUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-white p-8 rounded-2xl shadow-menu-hover border-2 border-menu-border flex justify-center items-center cursor-pointer hover:scale-105 transition-transform"
+      >
         <QRCodeSVG
           ref={qrRef}
           value={menuUrl}
@@ -63,7 +68,7 @@ export function QRCodeGenerator({ menuItems }: QRCodeGeneratorProps) {
           level="H"
           includeMargin={true}
         />
-      </div>
+      </a>
 
       {/* Info Stats */}
       <button
@@ -131,10 +136,10 @@ export function QRCodeGenerator({ menuItems }: QRCodeGeneratorProps) {
       <div className="w-full max-w-2xl bg-white rounded-lg p-6 border border-menu-border space-y-3">
         <h3 className="font-semibold text-menu-text text-lg">How It Works</h3>
         <ul className="text-menu-text-secondary text-sm space-y-2 list-disc list-inside">
-          <li><strong>Real QR Code:</strong> Points to your menu app</li>
+          <li><strong>Scan QR Code:</strong> Use your phone's camera to scan the QR code</li>
+          <li><strong>Click/Tap QR Code:</strong> You can also click or tap the QR code to open the menu directly</li>
           <li><strong>Offline Ready:</strong> Service worker caches all menu data and images for offline access</li>
           <li><strong>Printable:</strong> Download and print QR on menus, table tents, or entrance signage</li>
-          <li><strong>No Server Required:</strong> Menu loads from local cache - completely self-contained</li>
         </ul>
       </div>
     </div>
