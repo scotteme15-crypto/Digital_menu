@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { decompressMenuData } from '@/lib/qr-utils';
+import { decodeQRData } from '@/lib/qr-utils';
 import { MenuItem } from '@/lib/types';
 import { MENU_ITEMS } from '@/lib/menu-data';
 
@@ -17,7 +17,7 @@ export function useQRData() {
     if (qrData) {
       try {
         // Decode the QR data
-        const decompressed = decompressMenuData(decodeURIComponent(qrData));
+        const decompressed = decodeQRData(decodeURIComponent(qrData));
 
         if (decompressed.length > 0) {
           setMenuItems(decompressed);
@@ -39,3 +39,4 @@ export function useQRData() {
     error,
   };
 }
+
